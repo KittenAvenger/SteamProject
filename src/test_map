@@ -1,13 +1,32 @@
+
 -module(test_map).
 -compile(export_all).
 
-elem([],NewList)->lists:sublist(lists:reverse(lists:keysort(2,NewList)),10);
+elem([],NewList)->L=lists:sublist(lists:reverse(lists:keysort(2,NewList)),10),
+{ok, P} = riakc_pb_socket:start_link("127.0.0.1",10017),
+Y=tuple_to_list(erlang:date()),
+Z=term_to_binary(Y),
+Period = riakc_obj:new(<<"total2">>, Z, term_to_binary(L)),
+riakc_pb_socket:put(P, Period);
 
 elem([H|T],NewList)->
 
 T2=NewList++get_elem(H,T,[]),
 NewTail=delete_elem(H,T),
 elem(NewTail,T2).
+
+get_data(Z)-> {ok, P} = riakc_pb_socket:start_link("127.0.0.1",10017),
+{ok,O}=riakc_pb_socket:get(P,<<"total2">>
+,Z),
+W=riakc_obj:get_value(O),
+Obj=binary_to_term(W),
+Obj.
+
+get_data_daily(Y,M,D)->
+W=tuple_to_list({Y,M,D}),
+Z=term_to_binary(W), 
+get_data(Z).
+
 
 get_sum_riak()->
 {ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 10017),
@@ -42,3 +61,6 @@ case H of
 	_->[H|delete_elem({A,B},T)]
 
 end.
+
+
+
