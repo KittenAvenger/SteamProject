@@ -1,0 +1,83 @@
+-module(map).
+-compile(export_all).
+
+put()->
+{ok, Client} = riakc_pb_socket:start("127.0.0.1",10017),
+Mine = riakc_obj:new(<<"test">>, <<"tet">>,
+                        term_to_binary(["111", "222"])),
+ Yours = riakc_obj:new(<<"test">>, <<"tett">>,
+                         term_to_binary(["333", "111"])),
+ riakc_pb_socket:put(Client, Yours, [{w, 1}]),
+ riakc_pb_socket:put(Client, Mine, [{w, 1}]).
+
+%%%lists:sublist(lists:reverse(lists:keysort(2,map:m())),3).
+
+m()->
+{ok, Client} = riakc_pb_socket:start("127.0.0.1",10017),
+Count = fun(G, undefined, none) ->
+             [dict:from_list([{I, 1}
+              || I <- binary_to_term(riak_object:get_value(G))])]
+           end,
+ Merge = fun(Gcounts, none) ->
+             [lists:foldl(fun(G, Acc) ->
+                            dict:merge(fun(_, X, Y) -> X+Y end,
+                                       G, Acc)
+                          end,
+                          dict:new(),
+                          Gcounts)]
+           end,
+ {ok, [{1, [R]}]} = riakc_pb_socket:mapred(
+                         Client,
+                         [{<<"test">>, <<"tet">>},
+                          {<<"test">>, <<"tett">>}],
+                         [{map, {qfun, Count}, none, false},
+                          {reduce, {qfun, Merge}, none, true}]),
+ L = dict:to_list(R),
+L.
+
+ma()->{ok, P} = riakc_pb_socket:start_link("127.0.0.1",10017),
+
+
+
+
+Count = fun(G, undefined, none) ->
+             [dict:from_list([{I, 1}
+              || I <- binary_to_term(riak_object:get_value(G))])]
+           end,
+ Merge = fun(Gcounts, none) ->
+             [lists:foldl(fun(G, Acc) ->
+                            dict:merge(fun(_, X, Y) -> X+Y end,
+                                       G, Acc)
+                          end,
+                          dict:new(),
+                          Gcounts)]
+           end, 
+List=get_keys_list(),
+
+{ok, [{1, [R]}]} = riakc_pb_socket:mapred(
+                         P,
+                         List,
+                         [{map, {qfun, Count}, none, false},
+                          {reduce, {qfun, Merge}, none, true}]),
+ 
+ L = dict:to_list(R),
+%%%% top 10 values
+X=lists:sublist(lists:reverse(lists:keysort(2,L)),10).
+
+
+
+get_keys_list()->
+{ok, P} = riakc_pb_socket:start("127.0.0.1",10017),
+{ok,Lis}=riakc_pb_socket:list_keys(P, <<"ownedgames">>),
+%Lis.
+generate_list(Lis).
+
+generate_list([])->[];
+generate_list([H|T])->
+[{<<"ownedgames">>,H}|generate_list(T)].
+
+delete_bucket([])->done;
+delete_bucket([H|T])->
+{ok, P} = riakc_pb_socket:start("127.0.0.1",10017),
+riakc_pb_socket:delete(P, <<"ownedgames">>, H),
+delete_bucket(T).

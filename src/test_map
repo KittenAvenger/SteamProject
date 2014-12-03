@@ -1,0 +1,44 @@
+-module(test_map).
+-compile(export_all).
+
+elem([],NewList)->lists:sublist(lists:reverse(lists:keysort(2,NewList)),10);
+
+elem([H|T],NewList)->
+
+T2=NewList++get_elem(H,T,[]),
+NewTail=delete_elem(H,T),
+elem(NewTail,T2).
+
+get_sum_riak()->
+{ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 10017),
+{ok,List}=riakc_pb_socket:list_keys(Pid, <<"hoursplayed">>),
+L=get_obj(List),
+elem(L,[]).
+ 
+
+get_obj([])->[];
+get_obj([H|T])->
+{ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 10017),
+{ok, Fetched1} = riakc_pb_socket:get(Pid, <<"hoursplayed">>, H),
+lists:append(binary_to_term(riakc_obj:get_value(Fetched1)),get_obj(T)).
+
+
+get_elem({A,B},[],L)->[{A,get_sum([{A,B}]++L,0)}];
+get_elem({A,B},[H|T],NewList)->
+case H of
+	{A,C}->get_elem({A,B},T,NewList ++ [{A,C}]);
+	_->get_elem({A,B},T,NewList)
+end.
+
+get_sum([],Acc)->Acc;
+get_sum([H|T],Acc)->
+case H of
+	{_,B}->get_sum(T,B+Acc)
+end.
+delete_elem(_,[])->[];
+delete_elem({A,B},[H|T])->
+case H of
+	{A,_}->delete_elem({A,B},T);
+	_->[H|delete_elem({A,B},T)]
+
+end.
