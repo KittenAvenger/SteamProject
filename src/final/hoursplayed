@@ -5,7 +5,7 @@
 
 findHours(ID)->
 
-%io:format("Values: ~p ~n", [ID]),
+
 ssl:start(),
 application:start(inets),
 
@@ -14,7 +14,7 @@ application:start(inets),
 Struct=mochijson:decode(JSON),
 {struct, JsonData} = Struct,
 {struct, GameList} = proplists:get_value("response",JsonData),
-%io:format("Values: ~p ~n", [GameList]),
+
  
 
 
@@ -22,33 +22,9 @@ case GameList of
 		[{"total_count",0}]->"no games";
 	 []-> "no games";
 	_ -> {array, List}=proplists:get_value("games",GameList),
-	%io:format("Went in here bacon: ~p ~n", [ID]),
-	A=[parse(N) || N <- List]
+	A=[parse(N) || N <- List], database:store_hours(ID, A)
 end.
-%io:format("Values: ~p ~n", [A]).
 
-
-
-%case Struct of
-%	{_,[H|_]}-> case H of
-%		{_,Y}-> case Y of
-%
-%			{struct,List}-> case lists:keyfind("appid", 1, List) of
-%				false->[];
-%				{_,{_,ListI}} -> parse_list(ListI,[])
-%							end
-%		end
-%	end
-%	end. 
-
-parse_list([],List)->List;
-parse_list([H|T],List)->
-case H of
-	{struct,[Hd|_]} -> case Hd of
-		{_,S}->T2=List ++ [S],
-		parse_list(T,T2)
-	end
-end.
 
 parse ([]) -> [];
 
