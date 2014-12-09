@@ -67,8 +67,6 @@ X=lists:sublist(lists:reverse(lists:keysort(2,L)),10),
 
 %% put in data base daily
 Y=tuple_to_list(erlang:date()),
-%Converted= io_lib:format("~p",[Y]),
-%B=lists:flatten(Converted),
 Z=term_to_binary(Y),
 Period = riakc_obj:new(<<"total">>, Z, term_to_binary(X)),
 riakc_pb_socket:put(P, Period).
@@ -96,14 +94,14 @@ Converted= io_lib:format("~p",[GameList]),
 BC=lists:flatten(Converted),
 Converted1= io_lib:format("~p",[W]),
 BC1=lists:flatten(Converted1),
-%io:format("Values: ~p.", [BC1]),
+
 {ok, P} = riakc_pb_socket:start_link("54.68.217.138",8087),
-%B="12",
+
 BinaryID=list_to_binary(BC1),
 DataBin=list_to_binary(BC),
 Object = riakc_obj:new(<<"mapgames1">>, BinaryID, DataBin),
 riakc_pb_socket:put(P, Object).
-%[database:get_gamename(A)|| A <-GameList].
+
 
 test(Z)->
 A=list_to_binary(Z),
@@ -116,7 +114,7 @@ Obj.
 
 get_keys_list()->
 {ok, P} = riakc_pb_socket:start("54.68.217.138",8087),
-{ok,Lis}=riakc_pb_socket:list_keys(P, <<"mapgames1">>),
+{ok,Lis}=riakc_pb_socket:list_keys(P, <<"ownedgames">>),
 %Lis.
 generate_list(Lis).
 
