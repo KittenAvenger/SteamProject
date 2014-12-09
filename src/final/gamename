@@ -33,6 +33,7 @@ parse(A)->
 {struct, Data} = A,
 C=proplists:get_value("appid", Data),
 D=proplists:get_value("name", Data),
+io:format("Games: ~p.", [Data]),
 {C,D}.
 
 
