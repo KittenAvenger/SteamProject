@@ -1,53 +1,74 @@
 -module(database).
 
--export([connect/0, store_friends/2, get_friendslist/1,  store_appID/2, store_app/0, get_ownedgames/1, store_gameName/1, get_gamename/1, store_hours/2, get_hours/1]).
+-export([connect/0,  store_friends/2, get_friendslist/1,  store_appID/2, store_app/1, get_ownedgames/1, store_gameName/1, get_gamename/1, store_hours/2, get_hours/1]).
 
 
 
-
+%54.68.217.138
 
 
 connect()->
-{ok, Pid} = riakc_pb_socket:start_link("129.16.233.129", 10017),
-register(server, Pid).
+
+case whereis(server) of
+undefined ->
+
+{ok, Pid} = riakc_pb_socket:start_link("54.68.217.138",8087), 
+register(server, Pid),
+{ok,Pid};
+Pid -> {ok, Pid} 
+end.
+
+
+
+ 
+
 
 store_friends(ID, B) ->
 
+
+
+BinaryID=term_to_binary(ID),
+
+Object = riakc_obj:new(<<"friendslist">>, BinaryID, B),
+riakc_pb_socket:put(server, Object).
+%io:format("Values: ~p.", [ID]).
+
+
+
+store_app(FriendID) ->
+
+
 riakc_pb_socket:ping(server),
-Object = riakc_obj:new(<<"friendslist">>, ID, B),
-riakc_pb_socket:put(server, Object),
-io:format("Values: ~p.", [ID]).
-
-
-store_app() ->
-
-StartID="76561197960435530",
-riakc_pb_socket:ping(server),
-FriendList=get_friendslist(StartID),
+FriendList=get_friendslist(FriendID),
 [store_appID(N, appID:findApp(N)) || N <- FriendList].
+
 
 store_appID(ID, B) ->
 
 BinaryID=term_to_binary(ID),
 Object = riakc_obj:new(<<"ownedgames">>, BinaryID, B),
-riakc_pb_socket:put(server, Object),
-io:format("Values: ~p.", [ID]).
+riakc_pb_socket:put(server, Object).
+%io:format("Values: ~p.", [ID]).
+
 
 
 store_gameName({ID, Game}) ->
 
 BinaryID=term_to_binary(ID),
-Object = riakc_obj:new(<<"gamenames">>, BinaryID, Game),
-riakc_pb_socket:put(server, Object),
-io:format("Values: ~p.", [Game]).
-
+BinaryGame=term_to_binary(Game),
+Object = riakc_obj:new(<<"gamenames">>, BinaryID, BinaryGame),
+riakc_pb_socket:put(server, Object).
+%io:format("Values: ~p.", [Game]).
 
 store_hours (SteamID, Games) ->
 
 BinaryID=term_to_binary(SteamID),
 Object = riakc_obj:new(<<"hoursplayed">>, BinaryID, Games),
 riakc_pb_socket:put(server, Object),
-io:format("Values: ~p.", [Games]).
+io:format("~p.", [SteamID]).
+
+
+
 
 
 
@@ -74,8 +95,10 @@ binary_to_term(OwnedGamesList).
 
 get_gamename(ID)->
 
+database:connect(),
+
 BinaryID=term_to_binary(ID),
-io:format("Values: ~p.", [BinaryID]),
+
 {ok, Data} = riakc_pb_socket:get(server, <<"gamenames">>, BinaryID),
 GameName=riakc_obj:get_value(Data),
 binary_to_term(GameName).
@@ -83,7 +106,7 @@ binary_to_term(GameName).
 get_hours(ID) ->
 
 BinaryID=term_to_binary(ID),
-{ok, Data} = riakc_pb_socket:get(server, <<"hoursplayed">>, BinaryID),
+{ok, Data} = riakc_pb_socket:get(server, <<"bacon">>, BinaryID),
 HoursPlayedList=riakc_obj:get_value(Data),
 binary_to_term(HoursPlayedList).
 
