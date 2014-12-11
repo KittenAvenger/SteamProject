@@ -1,6 +1,6 @@
 -module(database).
 
--export([connect/0,  store_friends/2, get_friendslist/1,  store_appID/2, store_app/1, get_ownedgames/1, store_gameName/1, get_gamename/1, store_hours/2, get_hours/1]).
+-compile(export_all).
 
 
 
@@ -106,9 +106,70 @@ binary_to_term(GameName).
 get_hours(ID) ->
 
 BinaryID=term_to_binary(ID),
-{ok, Data} = riakc_pb_socket:get(server, <<"bacon">>, BinaryID),
+{ok, Data} = riakc_pb_socket:get(server, <<"hoursplayed">>, BinaryID),
 HoursPlayedList=riakc_obj:get_value(Data),
 binary_to_term(HoursPlayedList).
 
 
+get_mapgames(Z)-> {ok, P} = riakc_pb_socket:start_link("54.68.217.138",8087),
+{ok,O}=riakc_pb_socket:get(P,<<"total">>
+,Z),
+W=riakc_obj:get_value(O),
+Obj=binary_to_term(W),
+Obj.
 
+
+store_mapgames(Date)->
+W=tuple_to_list(Date),
+Z=term_to_binary(W),
+Data=get_mapgames(Z),
+GameList=lists:map(fun({X,A})-> {database:get_gamename(X),A} end, Data),
+Converted= io_lib:format("~p",[GameList]),
+BC=lists:flatten(Converted),
+Converted1= io_lib:format("~p",[W]),
+BC1=lists:flatten(Converted1),
+{ok, P} = riakc_pb_socket:start_link("54.68.217.138",8087),
+BinaryID=list_to_binary(BC1),
+DataBin=list_to_binary(BC),
+Object = riakc_obj:new(<<"mapgames1">>, BinaryID, DataBin),
+riakc_pb_socket:put(P, Object).
+
+
+
+get_maphours(Z)-> {ok, P} = riakc_pb_socket:start_link("54.68.217.138",8087),
+{ok,O}=riakc_pb_socket:get(P,<<"total2">>
+,Z),
+W=riakc_obj:get_value(O),
+Obj=binary_to_term(W),
+Obj.
+
+
+store_maphours(Date)->
+W=tuple_to_list(Date),
+Z=term_to_binary(W),
+Data=get_maphours(Z),
+GameList=lists:map(fun({X,A})-> {get_gamename(X),A} end, Data),
+Converted= io_lib:format("~p",[GameList]),
+BC=lists:flatten(Converted),
+Converted1= io_lib:format("~p",[W]),
+BC1=lists:flatten(Converted1),
+{ok, P} = riakc_pb_socket:start_link("54.68.217.138",8087),
+BinaryID=list_to_binary(BC1),
+DataBin=list_to_binary(BC),
+Object = riakc_obj:new(<<"maphours">>, BinaryID, DataBin),
+riakc_pb_socket:put(P, Object).
+
+
+
+test(Z)->
+A=list_to_binary(Z),
+{ok, P} = riakc_pb_socket:start_link("54.68.217.138",8087),
+{ok,O}=riakc_pb_socket:get(P,<<"maphours">>,A),
+W=riakc_obj:get_value(O),
+Obj=binary_to_list(W),
+Obj.
+
+
+store_map () ->
+store_mapgames(erlang:date()),
+store_maphours(erlang:date()).
