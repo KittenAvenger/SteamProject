@@ -1,31 +1,39 @@
+
+
 -module(friendslist).
 
--export([retrieve/0, start/0]).
+-compile(export_all).
 
 
+retrieve (ID) ->
 
 
-start() ->
 
 ssl:start(),
 application:start(inets),
-retrieve().
 
-retrieve () ->
-
-{ok,{_,_,JSON}}=httpc:request(get, {"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=80C9F831FD044A94E0A0FE0792624CD4&steamid=76561197960435530&relationship=friend", []},[], []),
-
+{ok,{_,_,JSON}}=httpc:request(get, {"http://api.steampowered.com/ISteamUser/GetFriendList/v0001/?key=80C9F831FD044A94E0A0FE0792624CD4&steamid=" ++ ID ++ "&relationship=friend", []},[], []),
 Struct=mochijson:decode(JSON),
 
-{struct, JsonData} = Struct,
+
+case Struct of
+		
+	 {struct, []}-> [];
+	_ -> 
+
+	{struct, JsonData} = Struct,
 {struct, Job} = proplists:get_value("friendslist",JsonData),
 {array, Data} = proplists:get_value("friends",Job),
-A=[parse(N) || N <- Data],
-Playlist=[findgames(X) || X <- A],
-Games=[mochijson:decode(C) || C <- Playlist],
+List=[parse(N) || N <- Data],
+List
+end.
 
 
-io:format("Games: ~p.", [Games]).
+sum([]) ->
+	0;
+sum([X|Xs]) ->
+	X+ sum(Xs).
+
 
 
 
@@ -36,8 +44,26 @@ C=string:strip(D, both, $"),
 C.
 
 
-findgames(A) ->
-{ok,{_,_,JSON}}=httpc:request(get, {"http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=80C9F831FD044A94E0A0FE0792624CD4&steamid="++A++"&format=json", []},[], []),
-JSON.
+listfriends()->
+
+List=retrieve("76561197960435530"),
+Friends=[retrieve(X) || X <- List],
+New=add(Friends),
+%io:format(" ~p", [New]).
+%Final=add(Friends),
+NewList=lists:usort(New),
+Total=len(NewList),
+Total.
+
+
+add([]) ->[];
+add([H|T]) -> lists:append(add(T), H).
+
+len([]) -> 0;
+len([_|T]) -> 1 + len(T).
+
+
+
+
 
 
