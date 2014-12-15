@@ -52,8 +52,10 @@ New=add(Friends),
 %io:format(" ~p", [New]).
 %Final=add(Friends),
 NewList=lists:usort(New),
-Total=len(NewList),
-Total.
+
+
+Total=[lists:nth(X, NewList) || X <- lists:seq(1,22000),X rem 10 == 0],
+len(Total).
 
 
 add([]) ->[];
