@@ -13,7 +13,7 @@ ownedgames() ->
 database:connect(),
 
 List=["76561197960435530","76561197965032141","76561198088291210"],
-[friendslist:retrieve(ID) || ID <-List],
+%[friendslist:retrieve(ID) || ID <-List],
 
 [database:store_app(ID)|| ID <-List].
 
